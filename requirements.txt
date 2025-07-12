@@ -1,0 +1,8 @@
+flask
+flask-cors
+transformers
+torch
+faster-whisper
+youtube-transcript-api
+scikit-learn
+yt-dlp

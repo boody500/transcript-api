@@ -1,0 +1,44 @@
+name: Build and Deploy to Azure
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Build and Push Docker Image
+      uses: azure/docker-login@v1
+      with:
+        login-server: <your-registry-name>.azurecr.io
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+
+    - run: |
+        docker build -t <your-image-name> .
+        docker tag <your-image-name> <your-registry-name>.azurecr.io/<your-image-name>:latest
+        docker push <your-registry-name>.azurecr.io/<your-image-name>:latest
+
+    - name: Deploy to Azure Container Instance
+      run: |
+        az container create \
+          --resource-group <your-rg> \
+          --name transcript-api \
+          --image <your-registry-name>.azurecr.io/<your-image-name>:latest \
+          --cpu 4 \
+          --memory 16 \
+          --gpu-count 1 \
+          --gpu-sku K80 \
+          --ports 5000 \
+          --os-type Linux
